@@ -1,0 +1,16 @@
+# Configuration
+config.txt
+allow_backup.key
+sendmail.ps1
+script_srv1.txt
+
+# Backups and Logs
+*.log
+*.7z
+*.zip
+LocalSync/
+WinSCP_log/
+
+# OS specific
+Thumbs.db
+Desktop.ini

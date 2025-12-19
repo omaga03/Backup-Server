@@ -1,0 +1,59 @@
+# ==========================================
+# CONFIGURATION FILE (Text Mode)
+# ==========================================
+
+# --- Time Settings ---
+timeout_val=10
+
+# --- Control Switches (ON/OFF) ---
+enable_srv1=ON
+enable_srv2=ON
+enable_email=ON
+
+# --- Email Settings ---
+smtp_server=smtp.gmail.com
+smtp_port=587
+email_user=YOUR_SENDER_EMAIL@gmail.com
+email_to=YOUR_RECEIVER_EMAIL@gmail.com
+email_pass=YOUR_APP_PASSWORD_HERE
+
+# --- Server 1 Settings ---
+srv1_name=SERVER_1_IP_ADDRESS
+srv1_sftpname=sftp://USERNAME:PASSWORD@SERVER_1_IP_ADDRESS/
+srv1_hostkeyssh=ssh-rsa 2048 xx:xx:xx:YOUR_HOST_KEY_FINGERPRINT
+
+# --- Server 2 Settings ---
+srv2_name=SERVER_2_IP_ADDRESS
+srv2_sftpname=sftp://USERNAME:PASSWORD@SERVER_2_IP_ADDRESS/
+srv2_hostkeyssh=ssh-rsa 2048 xx:xx:xx:YOUR_HOST_KEY_FINGERPRINT
+
+# --- System Paths ---
+backupDir=D:\Backup
+subfolder_name=LocalSync
+backupDirTo=F:\BackupWeb
+logDir=F:\WinSCP\log
+
+# --- Programs (Full Path) ---
+zip=C:\Program Files\7-Zip\7z.exe
+winscp=C:\Program Files (x86)\WinSCP\WinSCP.com
+
+# --- Output Filename ---
+filename=BackupLocalWeb
+
+# --- Server 1 Settings ---
+# ที่อยู่หลักบน Server (ไม่ต้องใส่ชื่อ Folder ย่อยต่อท้าย)
+srv1_remote_path=/path_to/html
+
+# รายชื่อโฟลเดอร์ที่จะ Sync Server 1 (คั่นด้วยช่องว่าง)
+srv1_folders_list=Folder1 Folder2 Folder3 Folder4 Folder5
+
+# --- Server 2 Settings ---
+# ที่อยู่โฟลเดอร์บน Server ที่ต้องการ Backup Sync Server 2
+srv2_remote_path=/path_to/html
+
+# รายชื่อไฟล์/โฟลเดอร์ที่จะ "ไม่เอา" (คั่นด้วย ; และขึ้นต้นด้วย |) Sync Server 2
+# ใส่รายชื่อไฟล์ขยะ, Cache, Backup เก่าๆ ที่นี่
+srv2_exclude_mask=|Cache1/;*.bak;cache/;Cache2/
+
+# --- Target Folders Sync Server 2 (Separate by space) ---
+folders_list=Folder1 Folder2 Folder3 Folder4 Folder5
