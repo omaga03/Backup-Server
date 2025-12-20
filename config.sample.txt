@@ -5,12 +5,14 @@
 # --- Time Settings ---
 timeout_val=10
 full_wipe_day=01
+# Choices: Mon, Tue, Wed, Thu, Fri, Sat, Sun
 retention_day=Fri
 
 # --- Control Switches (ON/OFF) ---
 enable_srv1=ON
 enable_srv2=ON
 enable_email=ON
+enable_delete_old_files=ON
 
 # --- Email Settings ---
 smtp_server=smtp.gmail.com
@@ -31,7 +33,7 @@ srv2_hostkeyssh=ssh-rsa 2048 xx:xx:xx:YOUR_HOST_KEY_FINGERPRINT
 
 # --- System Paths ---
 backupDir=D:\Backup
-subfolder_name=LocalSync
+subfolder_name=subfolder_name
 backupDirTo=F:\BackupWeb
 logDir=F:\WinSCP\log
 
@@ -55,7 +57,14 @@ srv2_remote_path=/path_to/html
 
 # รายชื่อไฟล์/โฟลเดอร์ที่จะ "ไม่เอา" (คั่นด้วย ; และขึ้นต้นด้วย |) Sync Server 2
 # ใส่รายชื่อไฟล์ขยะ, Cache, Backup เก่าๆ ที่นี่
-srv2_exclude_mask=|Cache1/;*.bak;cache/;Cache2
+srv2_exclude_mask=|Cache1/;*.bak;cache/;Cache2/
 
 # --- Target Folders Sync Server 2 (Separate by space) ---
 folders_list=Folder1 Folder2 Folder3 Folder4 Folder5
+
+# --- Advanced Settings (Optional) ---
+email_subject_prefix=[Backup-System]
+safety_key_name=allow_backup.key
+zip_mode=u
+zip_switches=-uq2 -mx1 -r -ssw -ms=off
+winscp_raw_settings=ProxyPort=0

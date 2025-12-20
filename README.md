@@ -40,10 +40,11 @@
 ```ini
 enable_srv1=ON                  # เปิด/ปิด การใช้งาน Server 1
 enable_email=ON                 # เปิด/ปิด การแจ้งเตือน Email
+enable_delete_old_files=ON      # เปิด/ปิด การลบไฟล์เก่า (ON=ลบตามปกติ, OFF=ห้ามลบเด็ดขาด)
 
 # Time & Logic Settings
 full_wipe_day=01                # วันที่จะทำ Full Wipe (01-31) | ว่าง = ปิด
-retention_day=Fri               # วันที่จะเก็บไฟล์สะสม (Mon,Tue,Wed,Thu,Fri,Sat,Sun) | ว่าง = ปิด (ทับทุกวัน)
+retention_day=Fri               # วันที่จะเก็บไฟล์สะสม (Mon, Tue, Wed, Thu, Fri, Sat, Sun) | ว่าง = ปิด (ลบไฟล์เก่าทุกวัน)
 
 # Email Settings
 email_user=YOUR_EMAIL@gmail.com
@@ -70,9 +71,18 @@ srv1_remote_path=/var/www/html
 srv1_folders_list=images uploads conf
 ```
 
-### 4. 🔑 สร้างไฟล์ Safety Key **(จำเป็น)**
+### 4. Advanced Settings (Optional)
+```ini
+email_subject_prefix=[Web-Backup]     # คำนำหน้าหัวข้ออีเมล (มีประโยชน์เมื่อมีหลาย Server)
+safety_key_name=allow_backup.key      # ชื่อไฟล์กุญแจ (เปลี่ยนได้เพื่อความลับ)
+zip_mode=u                            # โหมด 7-Zip: u=Update, a=Add
+zip_switches=-uq2 -mx1 -r -ssw -ms=off     # Option เสริมของ 7-Zip
+winscp_raw_settings=ProxyPort=0       # Raw Settings ของ WinSCP
+```
+
+### 5. 🔑 สร้างไฟล์ Safety Key **(จำเป็น)**
 เพื่อป้องกันความผิดพลาด ระบบจะทำงานก็ต่อเมื่อมีไฟล์กุญแจอยู่ใน `backupDir`
-*   **วิธีทำ**: สร้างไฟล์เปล่าชื่อ **`allow_backup.key`** ไว้ในโฟลเดอร์ `backupDir` ที่ตั้งค่าไว้
+*   **วิธีทำ**: สร้างไฟล์เปล่าชื่อ **`allow_backup.key`** (หรือชื่อที่ตั้งใน `safety_key_name`) ไว้ในโฟลเดอร์ `backupDir` ที่ตั้งค่าไว้
 
 ---
 

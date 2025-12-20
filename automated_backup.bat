@@ -48,6 +48,14 @@ REM ถ้าใน config ไม่ได้ตั้งชื่อมา ใ�
 if "%subfolder_name%"=="" set "subfolder_name=LocalSync"
 set "localsyn=%backupDir%\%subfolder_name%"
 
+REM ** Advanced Settings Defaults (กันเหนียว) **
+if "%safety_key_name%"=="" set "safety_key_name=allow_backup.key"
+if "%zip_mode%"=="" set "zip_mode=u"
+if "%zip_switches%"=="" set "zip_switches=-uq2 -mx1 -r -ssw -ms=off"
+if "%winscp_raw_settings%"=="" set "winscp_raw_settings=ProxyPort=0"
+if "%email_subject_prefix%"=="" set "email_subject_prefix=[Web-Backup]"
+if "%enable_delete_old_files%"=="" set "enable_delete_old_files=ON"
+
 REM ============================================================================
 REM [ SAFETY CHECKS ] ระบบตรวจสอบความปลอดภัย
 REM ============================================================================
@@ -59,8 +67,14 @@ if "%backupDir%"=="" (
     pause & exit
 )
 
-REM 2. เช็คไฟล์กุญแจ (allow_backup.key)
-if not exist "%backupDir%\allow_backup.key" (
+REM 1.1 เช็คตัวแปร backupDirTo (ปลายทาง) -> สำคัญมากเพราะมีคำสั่ง DEL
+if "%backupDirTo%"=="" (
+    color 0C
+    echo [CRITICAL ERROR] Variable 'backupDirTo' is EMPTY! Check config.txt.
+    pause & exit
+)
+REM 2. เช็คไฟล์กุญแจ (%safety_key_name%)
+if not exist "%backupDir%\%safety_key_name%" (
     color 0C
     echo.
     echo    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -68,7 +82,7 @@ if not exist "%backupDir%\allow_backup.key" (
     echo    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     echo.
     echo    [ERROR] Safety Key NOT FOUND!
-    echo    Path Checked: "%backupDir%\allow_backup.key"
+    echo    Path Checked: "%backupDir%\%safety_key_name%"
     echo.
     echo    [WAIT] System halted. Press any key to exit.
     pause >nul
@@ -147,10 +161,16 @@ goto NORMALBACKUP
     echo    !!!   TODAY IS DAY 1 : PERFORMING FULL WIPE & SYNC  !!!
     echo    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     echo.
+    echo.
     echo    [*] Status: Removing old local data...
-    if exist "%localsyn%" rmdir /s /q "%localsyn%"
-    echo    [*] Status: Re-creating directory structure...
-    mkdir "%localsyn%"
+    if /I "%enable_delete_old_files%"=="ON" (
+        if exist "%localsyn%" rmdir /s /q "%localsyn%"
+        echo    [*] Status: Re-creating directory structure...
+        mkdir "%localsyn%"
+    ) else (
+        echo    [INFO] Full Wipe SKIPPED (Delete is DISABLED in config)
+        if not exist "%localsyn%" mkdir "%localsyn%"
+    )
     for %%f in (%folders_list%) do (
         if not exist "%localsyn%\%%f" mkdir "%localsyn%\%%f"
     )
@@ -235,7 +255,7 @@ REM ============================================================================
         "%winscp%" /log="%logDir%\WinSCP2.log" /ini=nul /command ^
             "option batch continue" ^
             "option confirm off" ^
-            "open %srv2_sftpname% -hostkey=""%srv2_hostkeyssh%"" -rawsettings ProxyPort=0" ^
+            "open %srv2_sftpname% -hostkey=""%srv2_hostkeyssh%"" -rawsettings %winscp_raw_settings%" ^
             "synchronize -filemask=""%srv2_exclude_mask%"" local -delete ""%localsyn%\%srv2_name%"" ""%srv2_remote_path%/""" ^
             "exit"
         
@@ -279,7 +299,7 @@ REM ============================================================================
     if exist "%targetZip%" attrib -r -s -h "%targetZip%"
     
     REM เริ่มการบีบอัด
-    "%zip%" u "%targetZip%" -uq0 "%localsyn%\*" -r -ssw -ms=off 
+    "%zip%" %zip_mode% "%targetZip%" %zip_switches% "%localsyn%\*" 
     
     REM Auto-Repair Logic
     if !ERRORLEVEL! NEQ 0 (
@@ -288,7 +308,7 @@ REM ============================================================================
         set "targetZip=%backupDir%\localsyn_fresh.7z"
         if exist "!targetZip!" del /f /q "!targetZip!"
         echo    [*] Creating NEW archive: !targetZip!
-        "%zip%" a "!targetZip!" "%localsyn%\*" -r -ssw -ms=off 
+        "%zip%" a "!targetZip!" "%localsyn%\*" %zip_switches% 
     )
 
     if !ERRORLEVEL! EQU 0 (
@@ -308,7 +328,11 @@ REM ============================================================================
     REM Check Retention Day (Default: Fri)
     IF NOT "%retention_day%"=="" (
         IF NOT "%dow%" == "%retention_day%" (
-            del "%backupDirTo%\%filename%*%dow%.7z" /s /f /q >nul 2>&1
+            if /I "%enable_delete_old_files%"=="ON" (
+                del "%backupDirTo%\%filename%*%dow%.7z" /s /f /q >nul 2>&1
+            ) else (
+               echo    [INFO] Accumulating File (Delete Disabled)
+            )
         )
     )
 
@@ -364,9 +388,9 @@ REM ============================================================================
     timeout /t %timeout_val%
 
     if !global_error! EQU 0 (
-        set "mail_subject=Successfully Backup Server"
+        set "mail_subject=%email_subject_prefix% Success"
     ) else (
-        set "mail_subject=No Success Backup Server"
+        set "mail_subject=%email_subject_prefix% FAILED (Check Logs)"
     )
 
 REM ============================================================================
