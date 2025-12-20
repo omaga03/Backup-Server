@@ -131,8 +131,13 @@ timeout /t %timeout_val%
 REM ============================================================================
 REM [ LOGIC: DAY 1 CHECK ]
 REM ============================================================================
-if "%day%"=="1" goto FULLBACKUP
-if "%day%"=="01" goto FULLBACKUP
+if "%full_wipe_day%"=="" goto NORMALBACKUP
+REM Check Exact Match
+if "%day%"=="%full_wipe_day%" goto FULLBACKUP
+REM Check if config has leading zero but system doesn't (Config: 01, System: 1)
+if "0%day%"=="%full_wipe_day%" goto FULLBACKUP
+REM Check if system has leading zero but config doesn't (Config: 1, System: 01)
+if "%day%"=="0%full_wipe_day%" goto FULLBACKUP
 goto NORMALBACKUP
 
 :FULLBACKUP
@@ -300,8 +305,11 @@ REM ============================================================================
     timeout /t %timeout_val%
 
     REM Check Friday
-    IF NOT "%dow%" == "Fri" (
-        del "%backupDirTo%\%filename%*%dow%.7z" /s /f /q >nul 2>&1
+    REM Check Retention Day (Default: Fri)
+    IF NOT "%retention_day%"=="" (
+        IF NOT "%dow%" == "%retention_day%" (
+            del "%backupDirTo%\%filename%*%dow%.7z" /s /f /q >nul 2>&1
+        )
     )
 
     echo.
@@ -336,13 +344,15 @@ REM ============================================================================
     for /f "usebackq delims=" %%a in (`powershell -NoProfile -Command "$path=$env:P_FOLDER; if(Test-Path $path){ '{0:N2} MB' -f ((Get-ChildItem -Path $path -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum / 1MB) } else { '0.00 MB' }"`) do set "size_folder=%%a"
     for /f "usebackq delims=" %%a in (`powershell -NoProfile -Command "$path=$env:P_FILE; if(Test-Path $path){ $file=Get-Item -LiteralPath $path; '{0:N2} MB' -f ($file.Length / 1MB) } else { 'File Not Found' }"`) do set "size_zip=%%a"
 
-    REM 2. [STOP TIMER] คำนวณเวลา (ให้ PowerShell จัด Format มาให้เลย ชัวร์กว่า)
-    REM ตรวจสอบก่อนว่า start_ticks มีค่าไหม
+    REM 2. [STOP TIMER] คำนวณเวลา (ใช้สูตร -f แก้ปัญหาค่าไม่ออก)
+    
+    REM กันเหนียว: ถ้าไม่มีค่าเริ่มต้น ให้สมมติว่าเป็น 0
     if "%start_ticks%"=="" set "start_ticks=0"
 
-    for /f "usebackq delims=" %%a in (`powershell -NoProfile -Command "$ts = [TimeSpan]::FromTicks((Get-Date).Ticks - %start_ticks%); if($ts.Hours -gt 0){ '$($ts.Hours) hrs $($ts.Minutes) mins $($ts.Seconds) secs' } else { '$($ts.Minutes) mins $($ts.Seconds) secs' }"`) do set "total_duration=%%a"
+    REM ใช้ PowerShell คำนวณและจัดรูปแบบด้วย -f (Format)
+    for /f "usebackq delims=" %%a in (`powershell -NoProfile -Command "$ts = [TimeSpan]::FromTicks((Get-Date).Ticks - %start_ticks%); if($ts.Hours -gt 0){ '{0} hrs {1} mins {2} secs' -f $ts.Hours, $ts.Minutes, $ts.Seconds } else { '{0} mins {1} secs' -f $ts.Minutes, $ts.Seconds }"`) do set "total_duration=%%a"
 
-    REM กรณีคำนวณพลาดหรือค่าว่าง ให้ตั้งค่า Default
+    REM กรณี error ให้ใส่ค่า default
     if "%total_duration%"=="" set "total_duration=0 mins 0 secs"
 
     echo    [INFO] Source Folder Size : %size_folder%

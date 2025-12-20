@@ -4,6 +4,8 @@
 
 # --- Time Settings ---
 timeout_val=10
+full_wipe_day=01
+retention_day=Fri
 
 # --- Control Switches (ON/OFF) ---
 enable_srv1=ON
@@ -53,7 +55,7 @@ srv2_remote_path=/path_to/html
 
 # รายชื่อไฟล์/โฟลเดอร์ที่จะ "ไม่เอา" (คั่นด้วย ; และขึ้นต้นด้วย |) Sync Server 2
 # ใส่รายชื่อไฟล์ขยะ, Cache, Backup เก่าๆ ที่นี่
-srv2_exclude_mask=|Cache1/;*.bak;cache/;Cache2/
+srv2_exclude_mask=|Cache1/;*.bak;cache/;Cache2
 
 # --- Target Folders Sync Server 2 (Separate by space) ---
 folders_list=Folder1 Folder2 Folder3 Folder4 Folder5
