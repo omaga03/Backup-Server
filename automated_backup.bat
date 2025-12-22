@@ -51,7 +51,7 @@ set "localsyn=%backupDir%\%subfolder_name%"
 REM ** Advanced Settings Defaults (กันเหนียว) **
 if "%safety_key_name%"=="" set "safety_key_name=allow_backup.key"
 if "%zip_mode%"=="" set "zip_mode=u"
-if "%zip_switches%"=="" set "zip_switches=-uq2 -mx1 -r -ssw -ms=off"
+if "%zip_switches%"=="" set "zip_switches=-up0q0r2x2y2z1w2 -mx1 -r -ssw -ms=off"
 if "%winscp_raw_settings%"=="" set "winscp_raw_settings=ProxyPort=0"
 if "%email_subject_prefix%"=="" set "email_subject_prefix=[Web-Backup]"
 if "%enable_delete_old_files%"=="" set "enable_delete_old_files=ON"
@@ -476,7 +476,7 @@ echo.
 echo    [WAIT] SYSTEM HALTED. Press any key to exit and open folders.
 pause
 
-start %windir%\explorer.exe "%logDir%"
-start %windir%\explorer.exe "%backupDirTo%"
+start "" "%windir%\explorer.exe" "%logDir%"
+start "" "%windir%\explorer.exe" "%backupDirTo%"
 
 exit /B
