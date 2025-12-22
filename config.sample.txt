@@ -66,5 +66,6 @@ folders_list=Folder1 Folder2 Folder3 Folder4 Folder5
 email_subject_prefix=[Backup-System]
 safety_key_name=allow_backup.key
 zip_mode=u
-zip_switches=-uq2 -mx1 -r -ssw -ms=off
+# --- [-up0q0r2x2y2z1w2] ลบ: ถ้าเครื่องไม่มี -> ลบออกจาก Zip -- เพิ่ม: ถ้าเครื่องมีใหม่ -> เพิ่มลง Zip -- อัปเดต: ถ้าไฟล์มีการแก้ไข -> อัปเดตใน Zip ---
+zip_switches=-up0q0r2x2y2z1w2 -mx1 -r -ssw -ms=off
 winscp_raw_settings=ProxyPort=0
