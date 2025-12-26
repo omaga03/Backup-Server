@@ -32,6 +32,9 @@ for /f "eol=# tokens=1,* delims==" %%a in (config.txt) do (
     )
 )
 
+REM ** ตรวจสอบค่า timeout_val กันเหนียว (ถ้าไม่มีใน config ให้ตั้งเป็น 10 วิ) **
+if "%timeout_val%"=="" set timeout_val=10
+
 REM ** ตัวแปรสถานะเริ่มต้น **
 set "global_error=0"
 set "stat_srv1=NONE"
@@ -43,12 +46,11 @@ set "size_folder=Calculating..."
 set "size_zip=Calculating..."
 set "total_duration=Calculating..."
 
-REM ** กำหนดตัวแปร Derived (แก้ไขใหม่: รองรับการตั้งชื่อห้องย่อย) **
-REM ถ้าใน config ไม่ได้ตั้งชื่อมา ให้ใช้ชื่อ LocalSync เป็นค่าเริ่มต้น
+REM ** กำหนดตัวแปร Derived **
 if "%subfolder_name%"=="" set "subfolder_name=LocalSync"
 set "localsyn=%backupDir%\%subfolder_name%"
 
-REM ** Advanced Settings Defaults (กันเหนียว) **
+REM ** Advanced Settings Defaults **
 if "%safety_key_name%"=="" set "safety_key_name=allow_backup.key"
 if "%zip_mode%"=="" set "zip_mode=u"
 if "%zip_switches%"=="" set "zip_switches=-up0q0r2x2y2z1w2 -mx1 -r -ssw -ms=off"
@@ -67,12 +69,13 @@ if "%backupDir%"=="" (
     pause & exit
 )
 
-REM 1.1 เช็คตัวแปร backupDirTo (ปลายทาง) -> สำคัญมากเพราะมีคำสั่ง DEL
+REM 1.1 เช็คตัวแปร backupDirTo (ปลายทาง)
 if "%backupDirTo%"=="" (
     color 0C
     echo [CRITICAL ERROR] Variable 'backupDirTo' is EMPTY! Check config.txt.
     pause & exit
 )
+
 REM 2. เช็คไฟล์กุญแจ (%safety_key_name%)
 if not exist "%backupDir%\%safety_key_name%" (
     color 0C
@@ -89,12 +92,12 @@ if not exist "%backupDir%\%safety_key_name%" (
     exit
 )
 
-REM 3. เช็คโฟลเดอร์ย่อย (Sub-folder Check) -- [เพิ่มใหม่ตามสั่ง] --
+REM 3. เช็คโฟลเดอร์ย่อย (Sub-folder Check)
 if not exist "%localsyn%\" (
     color 0C
     echo.
     echo    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    echo    !!!          CRITICAL ERROR: FOLDER MISSING         !!!
+    echo    !!!      CRITICAL ERROR: FOLDER MISSING             !!!
     echo    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     echo.
     echo    [ERROR] Sub-folder NOT FOUND!
@@ -140,25 +143,43 @@ if /I "%enable_email%"=="ON" (echo    [ / ] EMAIL    : ENABLED) else (echo    [ 
 echo.
 echo    -------------------------------------------------------
 echo    [STEP] Initial Check Completed.
-timeout /t %timeout_val%
 
 REM ============================================================================
-REM [ LOGIC: DAY 1 CHECK ]
+REM [ LOGIC: MANUAL SELECTION WITH TIMEOUT ] ตัวเลือกแบบจับเวลา
 REM ============================================================================
-if "%full_wipe_day%"=="" goto NORMALBACKUP
-REM Check Exact Match
-if "%day%"=="%full_wipe_day%" goto FULLBACKUP
-REM Check if config has leading zero but system doesn't (Config: 01, System: 1)
-if "0%day%"=="%full_wipe_day%" goto FULLBACKUP
-REM Check if system has leading zero but config doesn't (Config: 1, System: 01)
-if "%day%"=="0%full_wipe_day%" goto FULLBACKUP
+echo.
+echo    -------------------------------------------------------
+echo    [ SELECT OPERATION MODE ]
+echo    -------------------------------------------------------
+echo    [ 1 ]   : Perform FULL WIPE (Delete Local & Re-Sync)
+echo    [ N ]   : Normal Backup (Update Only) - Default
+echo.
+
+REM --- คำสั่ง choice ---
+REM /C 1N       = รับค่าปุ่ม 1 หรือ N (และรวมถึงกรณี Timeout จะดีดไปค่า Default)
+REM /N          = ซ่อนลิสต์ปุ่ม [1,N]?
+REM /T %timeout%= กำหนดเวลาถอยหลัง
+REM /D N        = เมื่อหมดเวลา ให้เลือก N (Normal)
+REM /M          = ข้อความแจ้งเตือน
+
+choice /C 1N /N /T %timeout_val% /D N /M "   > Press [1] for Full Wipe, or wait %timeout_val%s for Normal: "
+
+REM ตรวจสอบค่า ErrorLevel (ต้องเรียงจากมากไปน้อย)
+REM ErrorLevel 2 = กด N หรือ หมดเวลา (Timeout)
+if errorlevel 2 goto NORMALBACKUP
+
+REM ErrorLevel 1 = กด 1
+if errorlevel 1 goto FULLBACKUP
+
+REM กันเหนียว ถ้าหลุดเงื่อนไข
 goto NORMALBACKUP
+
 
 :FULLBACKUP
     color 0C
     echo.
     echo    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    echo    !!!   TODAY IS DAY 1 : PERFORMING FULL WIPE & SYNC  !!!
+    echo    !!! TODAY IS : PERFORMING FULL WIPE & SYNC    !!!
     echo    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     echo.
     echo.
@@ -171,25 +192,28 @@ goto NORMALBACKUP
         echo    [INFO] Full Wipe SKIPPED (Delete is DISABLED in config)
         if not exist "%localsyn%" mkdir "%localsyn%"
     )
+  
     for %%f in (%folders_list%) do (
         if not exist "%localsyn%\%%f" mkdir "%localsyn%\%%f"
     )
     if exist "%backupDir%\localsyn.7z" del /f /q "%backupDir%\localsyn.7z"
     echo    [*] Ready for Full Download.
-    echo    [STEP] Day 1 Preparation Done. Starting WinSCP in %timeout_val%s...
+    echo    [STEP] Day Preparation Done. Starting WinSCP in %timeout_val%s...
     timeout /t %timeout_val%
     
     if /I "%enable_srv1%"=="OFF" (color 0E) else (if /I "%enable_srv2%"=="OFF" (color 0E) else (color 0A))
     goto STARTWINSCP
 
 :NORMALBACKUP
+    echo.
     echo    [*] Mode: Incremental Update [Sync Only]
     echo    [*] Clearing old logs...
     if exist "%logDir%\WinSCP.log" del "%logDir%\WinSCP.log" /s /f /q
     if exist "%localsyn%\WinSCP_log\WinSCP.log" del "%localsyn%\WinSCP_log\WinSCP.log" /s /f /q
     if exist "%logDir%\WinSCP2.log" del "%logDir%\WinSCP2.log" /s /f /q
     if exist "%localsyn%\WinSCP_log\WinSCP2.log" del "%localsyn%\WinSCP_log\WinSCP2.log" /s /f /q
-    echo    [STEP] Log Cleared. Starting WinSCP in %timeout_val%s...
+    echo    [STEP] Log Cleared.
+    echo    Starting WinSCP in %timeout_val%s...
     timeout /t %timeout_val%
 
 :STARTWINSCP
@@ -368,15 +392,10 @@ REM ============================================================================
     for /f "usebackq delims=" %%a in (`powershell -NoProfile -Command "$path=$env:P_FOLDER; if(Test-Path $path){ '{0:N2} MB' -f ((Get-ChildItem -Path $path -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum / 1MB) } else { '0.00 MB' }"`) do set "size_folder=%%a"
     for /f "usebackq delims=" %%a in (`powershell -NoProfile -Command "$path=$env:P_FILE; if(Test-Path $path){ $file=Get-Item -LiteralPath $path; '{0:N2} MB' -f ($file.Length / 1MB) } else { 'File Not Found' }"`) do set "size_zip=%%a"
 
-    REM 2. [STOP TIMER] คำนวณเวลา (ใช้สูตร -f แก้ปัญหาค่าไม่ออก)
-    
-    REM กันเหนียว: ถ้าไม่มีค่าเริ่มต้น ให้สมมติว่าเป็น 0
+    REM 2. [STOP TIMER] คำนวณเวลา
     if "%start_ticks%"=="" set "start_ticks=0"
-
-    REM ใช้ PowerShell คำนวณและจัดรูปแบบด้วย -f (Format)
     for /f "usebackq delims=" %%a in (`powershell -NoProfile -Command "$ts = [TimeSpan]::FromTicks((Get-Date).Ticks - %start_ticks%); if($ts.Hours -gt 0){ '{0} hrs {1} mins {2} secs' -f $ts.Hours, $ts.Minutes, $ts.Seconds } else { '{0} mins {1} secs' -f $ts.Minutes, $ts.Seconds }"`) do set "total_duration=%%a"
 
-    REM กรณี error ให้ใส่ค่า default
     if "%total_duration%"=="" set "total_duration=0 mins 0 secs"
 
     echo    [INFO] Source Folder Size : %size_folder%
