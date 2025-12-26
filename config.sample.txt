@@ -4,7 +4,6 @@
 
 # --- Time Settings ---
 timeout_val=10
-full_wipe_day=01
 # Choices: Mon, Tue, Wed, Thu, Fri, Sat, Sun
 retention_day=Fri
 
