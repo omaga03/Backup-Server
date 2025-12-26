@@ -39,6 +39,7 @@
 ### 1. การเชื่อมต่อ Server & Email
 ```ini
 enable_srv1=ON                  # เปิด/ปิด การใช้งาน Server 1
+enable_srv2=ON                  # เปิด/ปิด การใช้งาน Server 2
 enable_email=ON                 # เปิด/ปิด การแจ้งเตือน Email
 enable_delete_old_files=ON      # เปิด/ปิด การลบไฟล์เก่า (ON=ลบตามปกติ, OFF=ห้ามลบเด็ดขาด)
 
@@ -47,6 +48,9 @@ full_wipe_day=01                # วันที่จะทำ Full Wipe (01-3
 retention_day=Fri               # วันที่จะเก็บไฟล์สะสม (Mon, Tue, Wed, Thu, Fri, Sat, Sun) | ว่าง = ปิด (ลบไฟล์เก่าทุกวัน)
 
 # Email Settings
+email_to=recipient@example.com  # อีเมลปลายทางที่จะรับแจ้งเตือน
+smtp_server=smtp.gmail.com      # SMTP Server (เช่น smtp.gmail.com)
+smtp_port=587                   # SMTP Port (เช่น 587)
 email_user=YOUR_EMAIL@gmail.com
 email_pass=YOUR_APP_PASSWORD    # รหัส App Password 16 หลัก
 
@@ -54,6 +58,13 @@ email_pass=YOUR_APP_PASSWORD    # รหัส App Password 16 หลัก
 srv1_name=MyWebServer
 srv1_sftpname=sftp://user:pass@192.168.1.1/   # Connection String หรือ Session Name ใน WinSCP
 srv1_hostkeyssh=ssh-rsa 2048...               # ดูได้จาก WinSCP (Session > Server/Protocol Information)
+
+# Server 2 Settings
+srv2_name=MyDatabaseServer
+srv2_sftpname=sftp://user:pass@192.168.1.2/
+srv2_hostkeyssh=ssh-rsa 2048...
+srv2_remote_path=/var/lib/mysql
+srv2_exclude_mask=*.log;*.tmp
 ```
 
 ### 2. ที่อยู่โฟลเดอร์ (Paths)
